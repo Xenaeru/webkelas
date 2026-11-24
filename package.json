@@ -1,0 +1,38 @@
+{
+  "name": "x-rpl-1",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "node scripts/e2e.mjs",
+    "test:ui": "node scripts/ui-test.mjs",
+    "seed": "node scripts/seed.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.6.0",
+    "next": "^15.5.29",
+    "pg": "^8.23.1",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.1.14",
+    "@types/node": "22.15.3",
+    "@types/pg": "^8.23.1",
+    "@types/react": "19.1.9",
+    "@types/react-dom": "19.1.7",
+    "eslint": "9.36.0",
+    "eslint-config-next": "^15.5.29",
+    "playwright": "^1.65.1",
+    "tailwindcss": "4.1.14",
+    "typescript": "5.9.2",
+    "vitest": "3.2.4"
+  }
+}
