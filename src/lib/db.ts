@@ -163,6 +163,23 @@ async function createPgliteClient(): Promise<SqlClient> {
 
 async function initialize(): Promise<DbHandle> {
   const driver = databaseDriver();
+
+  // PGlite needs a writable directory. Vercel's filesystem is read-only, so a
+  // missing DATABASE_URL in production would fail deep inside PGlite with an
+  // opaque EROFS. Fail early with an actionable message instead. Tests and the
+  // audit scripts run with NODE_ENV=production too, but always set
+  // PGLITE_DATA_DIR explicitly, so they are allowed through.
+  if (
+    driver === "pglite" &&
+    process.env.NODE_ENV === "production" &&
+    !process.env.PGLITE_DATA_DIR
+  ) {
+    throw new Error(
+      "DATABASE_URL belum diset. Di produksi database Postgres wajib dikonfigurasi " +
+        "(mis. Supabase pooler port 6543). Set DATABASE_URL lalu deploy ulang.",
+    );
+  }
+
   const client = driver === "postgres" ? await createPostgresClient() : await createPgliteClient();
   const handle: DbHandle = { driver, client, initialized: Promise.resolve() };
   handle.initialized = migrate(client);
