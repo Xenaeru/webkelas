@@ -32,15 +32,24 @@ export default async function JadwalPage() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader active="jadwal" />
-      <main className="flex-1">
-        <JadwalClient
-          initialContext={context}
-          schedulesByVersion={schedulesByVersion}
-          initialSchedules={initialSchedules}
-          scheduleSettings={scheduleSettings}
-          assignments={assignments}
-          settings={settings}
-        />
+      <main className="relative flex-1">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-64 overflow-hidden"
+        >
+          <div className="hero-glow -top-20 right-1/4 h-64 w-64 bg-moss-200/40" />
+          <div className="hero-glow -top-10 left-1/4 h-52 w-52 bg-clay-200/30 [animation-delay:-9s]" />
+        </div>
+        <div className="relative">
+          <JadwalClient
+            initialContext={context}
+            schedulesByVersion={schedulesByVersion}
+            initialSchedules={initialSchedules}
+            scheduleSettings={scheduleSettings}
+            assignments={assignments}
+            settings={settings}
+          />
+        </div>
       </main>
       <SiteFooter />
     </div>

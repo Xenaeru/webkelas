@@ -58,16 +58,17 @@ export default async function AdminDashboardPage() {
         </p>
       </header>
 
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3">
+      <div className="stagger grid grid-cols-2 gap-2.5 sm:grid-cols-3">
         {cards.map((card) => (
           <div
             key={card.label}
             className={[
-              "rounded-lg border bg-white px-4 py-3.5",
+              "card-lift rounded-lg border bg-white px-4 py-3.5",
               card.alert ? "border-clay-200 bg-clay-50/40" : "border-paper-300",
             ].join(" ")}
           >
-            <p className="text-[10px] font-medium tracking-[0.12em] text-ink-400 uppercase">
+            <p className="flex items-center gap-1.5 text-[10px] font-medium tracking-[0.12em] text-ink-400 uppercase">
+              {card.alert && <span className="live-dot bg-clay-500 text-clay-500" />}
               {card.label}
             </p>
             <p
@@ -162,8 +163,8 @@ export default async function AdminDashboardPage() {
                 <Link
                   href={`/admin/jadwal?version=${card.version}`}
                   className={[
-                    "block rounded-lg border bg-white px-4 py-3 transition-colors",
-                    isLive ? "border-ink-900" : "border-paper-300 hover:border-ink-400",
+                    "card-lift block rounded-lg border bg-white px-4 py-3",
+                    isLive ? "border-ink-900" : "border-paper-300",
                   ].join(" ")}
                 >
                   <div className="flex items-center justify-between gap-2">

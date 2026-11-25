@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/public/site-header";
@@ -41,11 +42,20 @@ export default async function HomePage() {
             aria-hidden
             className="grain pointer-events-none absolute inset-0 opacity-[0.35] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]"
           />
+          <div
+            aria-hidden
+            className="hero-glow -top-24 -left-16 h-72 w-72 bg-moss-200/60"
+          />
+          <div
+            aria-hidden
+            className="hero-glow top-1/3 -right-24 h-80 w-80 bg-clay-200/50 [animation-delay:-8s]"
+          />
+
           <div className="relative mx-auto grid w-full max-w-6xl gap-10 px-5 py-14 sm:px-8 sm:py-20 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
             <div className="animate-rise">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge tone="moss">
-                  <span className="animate-pulse-dot h-1.5 w-1.5 rounded-full bg-moss-500" />
+                  <span className="live-dot bg-moss-500 text-moss-500" />
                   Kelas aktif
                 </Badge>
                 {settings.academicYear && <Badge tone="outline">{settings.academicYear}</Badge>}
@@ -62,12 +72,12 @@ export default async function HomePage() {
               <div className="mt-7 flex flex-wrap items-center gap-3">
                 <Link
                   href="/jadwal"
-                  className="group inline-flex items-center gap-2 rounded-lg bg-ink-950 px-5 py-2.5 text-sm font-medium text-paper-50 transition-all duration-200 hover:bg-ink-800 hover:shadow-[0_10px_24px_-14px_rgba(11,15,20,0.7)]"
+                  className="press group inline-flex items-center gap-2 rounded-lg bg-ink-950 px-5 py-2.5 text-sm font-medium text-paper-50 hover:bg-ink-800 hover:shadow-[0_12px_28px_-16px_rgba(11,15,20,0.8)]"
                 >
                   Lihat jadwal &amp; tugas
                   <span
                     aria-hidden
-                    className="transition-transform duration-200 group-hover:translate-x-0.5"
+                    className="transition-transform duration-300 ease-out group-hover:translate-x-1"
                   >
                     →
                   </span>
@@ -77,7 +87,7 @@ export default async function HomePage() {
                 </span>
               </div>
 
-              <dl className="mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-paper-200 pt-6">
+              <dl className="stagger mt-10 grid max-w-md grid-cols-3 gap-4 border-t border-paper-200 pt-6">
                 <div>
                   <dt className="text-[11px] tracking-[0.14em] text-ink-400 uppercase">Pelajaran</dt>
                   <dd className="tabular mt-1 font-display text-2xl font-semibold text-ink-900">
@@ -108,9 +118,13 @@ export default async function HomePage() {
 
         {/* Announcement */}
         {settings.announcement && (
-          <section className="border-b border-paper-200 bg-ink-950 text-paper-50">
+          <section
+            data-reveal
+            className="border-b border-paper-200 bg-ink-950 text-paper-50"
+          >
             <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-5 py-6 sm:flex-row sm:items-start sm:gap-6 sm:px-8">
-              <span className="mt-0.5 shrink-0 text-[10px] font-semibold tracking-[0.2em] text-moss-200 uppercase">
+              <span className="mt-0.5 flex shrink-0 items-center gap-1.5 text-[10px] font-semibold tracking-[0.2em] text-moss-200 uppercase">
+                <span className="live-dot bg-moss-200 text-moss-200" />
                 Pengumuman
               </span>
               <p className="max-w-3xl text-[14px] leading-relaxed text-paper-100">
@@ -123,7 +137,7 @@ export default async function HomePage() {
         {/* Assignments preview */}
         <section className="mx-auto w-full max-w-6xl px-5 py-14 sm:px-8 sm:py-16">
           <div className="grid gap-10 lg:grid-cols-[0.75fr_1.25fr]">
-            <div>
+            <div data-reveal>
               <h2 className="text-2xl font-semibold text-ink-950 sm:text-3xl">Tugas terbaru</h2>
               <p className="mt-2 max-w-sm text-[14px] leading-relaxed text-ink-500">
                 Empat tugas aktif dengan deadline terdekat. Buka halaman jadwal untuk melihat daftar
@@ -131,21 +145,26 @@ export default async function HomePage() {
               </p>
               <Link
                 href="/jadwal"
-                className="mt-3 inline-flex items-center gap-1.5 py-2 text-sm font-medium text-moss-600 underline-offset-4 hover:underline"
+                className="press link-rule group mt-3 inline-flex items-center gap-1.5 py-2 text-sm font-medium text-moss-600"
               >
                 Semua tugas
-                <span aria-hidden>→</span>
+                <span
+                  aria-hidden
+                  className="transition-transform duration-300 ease-out group-hover:translate-x-0.5"
+                >
+                  →
+                </span>
               </Link>
 
               {settings.homeroomTeacher && (
-                <div className="mt-8 rounded-lg border border-paper-300 bg-white px-4 py-3">
+                <div className="card-lift mt-8 rounded-lg border border-paper-300 bg-white px-4 py-3">
                   <p className="text-[10px] tracking-[0.16em] text-ink-400 uppercase">Wali kelas</p>
                   <p className="mt-1 text-sm font-medium text-ink-900">{settings.homeroomTeacher}</p>
                 </div>
               )}
             </div>
 
-            <div>
+            <div data-reveal style={{ "--reveal-delay": "90ms" } as CSSProperties}>
               <AssignmentList
                 assignments={sorted}
                 emptyTitle="Belum ada tugas aktif"

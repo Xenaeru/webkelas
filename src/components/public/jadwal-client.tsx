@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { CountdownLabel, useLiveDay } from "@/components/public/use-live-day";
 import { ScheduleTimeline } from "@/components/public/schedule-timeline";
 import { AssignmentList } from "@/components/public/assignment-list";
@@ -90,6 +91,54 @@ export function JadwalClient({
     setSelected(d === activeDay ? null : d);
   };
 
+  // The sliding tab pill needs the geometry of the selected column. Measure on
+  // mount, on resize, and whenever the selection changes — never on every tick.
+  // rects are used rather than offsetLeft so the pill stays correct regardless
+  // of the grid's own offset from the tablist origin.
+  const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
+
+  const measure = useCallback(() => {
+    const index = SCHOOL_DAYS.indexOf(viewingDay);
+    const node = tabRefs.current[index];
+    const list = listRef.current;
+    if (!node || !list) {
+      setIndicator(null);
+      return;
+    }
+    const nodeBox = node.getBoundingClientRect();
+    const listBox = list.getBoundingClientRect();
+    const next = {
+      left: nodeBox.left - listBox.left,
+      width: nodeBox.width,
+    };
+    setIndicator((prev) =>
+      prev && Math.abs(prev.left - next.left) < 0.5 && Math.abs(prev.width - next.width) < 0.5
+        ? prev
+        : next,
+    );
+  }, [viewingDay]);
+
+  useEffect(() => {
+    measure();
+    window.addEventListener("resize", measure);
+
+    // Web fonts land after first paint and change the column widths, which
+    // would leave the pill misaligned until the next resize.
+    let cancelled = false;
+    if (typeof document !== "undefined" && "fonts" in document) {
+      void document.fonts.ready.then(() => {
+        if (!cancelled) measure();
+      });
+    }
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("resize", measure);
+    };
+  }, [measure]);
+
   return (
     <div className="mx-auto w-full max-w-6xl px-5 sm:px-8">
       {/* Page header */}
@@ -111,7 +160,7 @@ export function JadwalClient({
       <section aria-label="Jadwal yang digunakan" className="mb-4">
         <div
           className={[
-            "flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-4 py-3",
+            "flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-4 py-3 transition-colors duration-500",
             examActive
               ? "border-clay-200 bg-clay-50"
               : "border-paper-300 bg-paper-100/70",
@@ -119,15 +168,21 @@ export function JadwalClient({
         >
           <span
             className={[
-              "text-[10px] font-semibold tracking-[0.18em] uppercase",
+              "flex items-center gap-1.5 text-[10px] font-semibold tracking-[0.18em] uppercase transition-colors duration-500",
               examActive ? "text-clay-600" : "text-ink-400",
             ].join(" ")}
           >
+            <span
+              className={[
+                "live-dot",
+                examActive ? "bg-clay-500 text-clay-500" : "bg-moss-500 text-moss-500",
+              ].join(" ")}
+            />
             {examActive ? "Mode ujian" : "Jadwal aktif"}
           </span>
           <span
             className={[
-              "tabular text-[13px] font-semibold",
+              "tabular text-[13px] font-semibold transition-colors duration-500",
               examActive ? "text-clay-600" : "text-ink-900",
             ].join(" ")}
             suppressHydrationWarning
@@ -254,10 +309,26 @@ export function JadwalClient({
         </div>
 
         <div
+          ref={listRef}
           role="tablist"
           aria-label="Hari sekolah"
-          className="grid grid-cols-5 gap-1.5 sm:gap-2"
+          className="relative grid grid-cols-5 gap-1.5 sm:gap-2"
         >
+          {/* Sliding pill. All five columns are equal width, so a single
+              translate + width measurement covers every case; the transition
+              is transform-only, which the compositor can run. */}
+          {indicator && (
+            <span
+              aria-hidden
+              className="pointer-events-none absolute top-0 left-0 -z-0 h-full rounded-lg border border-ink-900 bg-ink-900 shadow-[0_8px_20px_-16px_rgba(11,15,20,0.9)]"
+              style={{
+                width: `${indicator.width}px`,
+                transform: `translateX(${indicator.left}px)`,
+                transition: "transform 0.35s var(--ease-out-quint)",
+              }}
+            />
+          )}
+
           {SCHOOL_DAYS.map((d) => {
             const isActive = d === activeDay;
             const isSelected = d === viewingDay;
@@ -266,22 +337,25 @@ export function JadwalClient({
             return (
               <button
                 key={d}
+                ref={(node) => {
+                  if (node) tabRefs.current[SCHOOL_DAYS.indexOf(d)] = node;
+                }}
                 role="tab"
                 type="button"
                 aria-selected={isSelected}
                 aria-controls="panel-jadwal"
                 onClick={() => handleSelect(d)}
                 className={[
-                  "group relative flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 transition-all duration-200",
+                  "press relative z-10 flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5",
                   isSelected
-                    ? "border-ink-900 bg-ink-900 text-paper-50 shadow-[0_8px_20px_-16px_rgba(11,15,20,0.9)]"
+                    ? "border-transparent text-paper-50"
                     : "border-paper-300 bg-white text-ink-700 hover:border-ink-500 hover:bg-paper-100",
                 ].join(" ")}
               >
                 <span className="text-[13px] font-semibold sm:text-sm">{SCHOOL_DAY_SHORT[d]}</span>
                 <span
                   className={[
-                    "hidden text-[10px] sm:block",
+                    "hidden text-[10px] transition-colors duration-300 sm:block",
                     isSelected ? "text-paper-200/80" : "text-ink-400",
                   ].join(" ")}
                 >
@@ -291,8 +365,8 @@ export function JadwalClient({
                   <span
                     aria-label="Hari aktif otomatis"
                     className={[
-                      "absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full",
-                      isSelected ? "bg-moss-200" : "bg-moss-500",
+                      "live-dot absolute top-1.5 right-1.5",
+                      isSelected ? "bg-moss-200 text-moss-200" : "bg-moss-500 text-moss-500",
                     ].join(" ")}
                   />
                 )}
@@ -372,7 +446,10 @@ export function JadwalClient({
 
       {/* Assignments — never affected by schedule mode */}
       <section aria-labelledby="judul-tugas" className="mt-14">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-2 border-t border-paper-200 pt-8">
+        <div
+          data-reveal
+          className="mb-4 flex flex-wrap items-end justify-between gap-2 border-t border-paper-200 pt-8"
+        >
           <div>
             <h2 id="judul-tugas" className="text-2xl font-semibold text-ink-950">
               Daftar Tugas
@@ -388,7 +465,7 @@ export function JadwalClient({
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
-          <div>
+          <div data-reveal>
             <h3 className="mb-3 text-[11px] font-semibold tracking-[0.16em] text-ink-400 uppercase">
               Diberikan hari {SCHOOL_DAY_NAMES[viewingDay]}
             </h3>
@@ -399,7 +476,7 @@ export function JadwalClient({
             />
           </div>
 
-          <aside>
+          <aside data-reveal style={{ "--reveal-delay": "80ms" } as CSSProperties}>
             <h3 className="mb-3 text-[11px] font-semibold tracking-[0.16em] text-ink-400 uppercase">
               Tugas aktif lainnya
             </h3>
@@ -414,7 +491,10 @@ export function JadwalClient({
                 {otherAssignments.map((assignment) => {
                   const overdue = daysUntil(assignment.dueDate) < 0;
                   return (
-                    <li key={assignment.id} className="flex items-start gap-3 py-2.5">
+                    <li
+                      key={assignment.id}
+                      className="row-lift flex items-start gap-3 py-2.5"
+                    >
                       <span
                         aria-hidden
                         className={[

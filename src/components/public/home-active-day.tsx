@@ -8,6 +8,11 @@ import { resolveActiveSchedule, type ScheduleContext } from "@/lib/schedule-vers
 import type { ClassSettings, DailySchedule, ScheduleSettings } from "@/lib/repository";
 import { formatDateId } from "@/lib/time";
 
+function toMinutes(time: string): number {
+  const [h, m] = time.split(":");
+  return Number(h) * 60 + Number(m);
+}
+
 export function HomeActiveDay({
   context,
   activeSchedule,
@@ -19,7 +24,7 @@ export function HomeActiveDay({
   settings: ClassSettings;
   scheduleSettings: ScheduleSettings;
 }) {
-  const { day, mounted } = useLiveDay(context.displayDay);
+  const { day, mounted, nowMinutes } = useLiveDay(context.displayDay);
 
   // Recompute live so a 19:00 rollover or a new week/month picks the right variant.
   const active = useMemo(
@@ -35,13 +40,14 @@ export function HomeActiveDay({
   const schedule =
     activeSchedule && activeSchedule.dayOfWeek === activeDay ? activeSchedule : null;
   const preview = schedule?.items.slice(0, 4) ?? [];
+  const showNow = mounted && day.isRealToday;
 
   return (
     <div className="animate-rise lg:pl-4">
-      <div className="overflow-hidden rounded-xl border border-paper-300 bg-white shadow-[0_24px_60px_-48px_rgba(11,15,20,0.5)]">
+      <div className="card-lift rounded-xl border border-paper-300 bg-white shadow-[0_24px_60px_-48px_rgba(11,15,20,0.5)]">
         <div className="flex items-center justify-between gap-2 border-b border-paper-200 bg-paper-100/70 px-5 py-3">
           <div className="flex items-center gap-2">
-            <span className="animate-pulse-dot h-1.5 w-1.5 rounded-full bg-moss-500" />
+            <span className="live-dot bg-moss-500 text-moss-500" />
             <span className="text-[10px] font-semibold tracking-[0.2em] text-ink-500 uppercase">
               {examActive ? "Mode ujian aktif" : "Jadwal tampil sekarang"}
             </span>
@@ -71,16 +77,36 @@ export function HomeActiveDay({
 
           {preview.length > 0 ? (
             <ol className="mt-4 divide-y divide-paper-200 border-t border-paper-200">
-              {preview.map((item) => (
-                <li key={item.id} className="flex items-baseline gap-3 py-2.5">
-                  <span className="tabular w-[5.2rem] shrink-0 text-[12px] text-ink-400">
-                    {item.startTime}–{item.endTime}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink-900">
-                    {item.subject}
-                  </span>
-                </li>
-              ))}
+              {preview.map((item) => {
+                const start = toMinutes(item.startTime);
+                const end = toMinutes(item.endTime);
+                const isNow = showNow && nowMinutes >= start && nowMinutes < end;
+
+                return (
+                  <li
+                    key={item.id}
+                    className={[
+                      "row-lift flex items-baseline gap-3 rounded-sm py-2.5",
+                      isNow ? "bg-moss-50/60" : "",
+                    ].join(" ")}
+                  >
+                    <span
+                      className={[
+                        "tabular w-[5.2rem] shrink-0 text-[12px]",
+                        isNow ? "font-semibold text-moss-700" : "text-ink-400",
+                      ].join(" ")}
+                    >
+                      {item.startTime}–{item.endTime}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink-900">
+                      {item.subject}
+                    </span>
+                    {isNow && (
+                      <span className="live-dot bg-moss-500 text-moss-500" aria-label="Sedang berlangsung" />
+                    )}
+                  </li>
+                );
+              })}
             </ol>
           ) : (
             <p className="mt-4 rounded-md border border-dashed border-paper-300 px-3 py-6 text-center text-[12px] text-ink-400">
@@ -99,7 +125,7 @@ export function HomeActiveDay({
             </div>
             <Link
               href="/jadwal"
-              className="rounded-md border border-paper-300 px-3 py-1.5 text-[12px] font-medium text-ink-700 transition-colors hover:border-ink-700 hover:text-ink-950"
+              className="press rounded-md border border-paper-300 px-3 py-1.5 text-[12px] font-medium text-ink-700 hover:border-ink-700 hover:bg-paper-100 hover:text-ink-950"
             >
               Detail
             </Link>

@@ -36,20 +36,28 @@ export function ScheduleTimeline({
         const end = toMinutes(item.endTime);
         const isNow =
           showNow && typeof nowMinutes === "number" && nowMinutes >= start && nowMinutes < end;
+        const isDone = showNow && typeof nowMinutes === "number" && nowMinutes >= end;
 
         return (
           <li
             key={item.id}
             className={[
-              "group relative grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-1 px-1 transition-colors sm:grid-cols-[7.5rem_1fr_auto]",
+              "group row-lift relative grid grid-cols-[auto_1fr] items-start gap-x-4 gap-y-1 px-1 transition-colors sm:grid-cols-[7.5rem_1fr_auto]",
               compact ? "py-3" : "py-4",
-              isNow ? "bg-moss-50/70" : "hover:bg-paper-100/70",
+              isNow ? "bg-moss-50/70" : "",
+              !isNow ? "hover:bg-paper-100/70" : "",
             ].join(" ")}
           >
             {isNow && (
               <span
                 aria-hidden
-                className="absolute inset-y-0 left-0 w-[3px] bg-moss-500"
+                className="absolute inset-y-0 left-0 w-[3px] origin-top bg-moss-500 [animation:sweep-line_0.5s_var(--ease-out-quint)_both]"
+              />
+            )}
+            {isDone && (
+              <span
+                aria-hidden
+                className="absolute inset-y-2 left-0 w-[2px] bg-paper-300"
               />
             )}
 
@@ -68,7 +76,7 @@ export function ScheduleTimeline({
                 {item.subject}
                 {isNow && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-moss-500 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-white uppercase">
-                    <span className="animate-pulse-dot h-1.5 w-1.5 rounded-full bg-white" />
+                    <span className="live-dot bg-white text-white" />
                     Sekarang
                   </span>
                 )}
@@ -94,7 +102,7 @@ export function ScheduleTimeline({
               )}
             </div>
 
-            <span className="col-start-2 hidden self-center text-[11px] tracking-[0.14em] text-ink-400 uppercase sm:col-start-3 sm:block">
+            <span className="col-start-2 hidden self-center text-[11px] tracking-[0.14em] text-ink-400 uppercase transition-colors group-hover:text-ink-700 sm:col-start-3 sm:block">
               {String(index + 1).padStart(2, "0")}
             </span>
           </li>

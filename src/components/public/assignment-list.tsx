@@ -28,9 +28,8 @@ export function AssignmentList({
           <li
             key={assignment.id}
             className={[
-              "group relative rounded-lg border bg-white px-4 py-3.5 transition-all duration-200",
-              "hover:border-ink-400 hover:shadow-[0_10px_24px_-20px_rgba(11,15,20,0.6)]",
-              isCompleted ? "border-paper-200 opacity-70" : "border-paper-300",
+              "card-lift group relative rounded-lg border bg-white px-4 py-3.5",
+              isCompleted ? "border-paper-200" : "border-paper-300",
               deadline.state === "overdue" ? "border-l-2 border-l-clay-500" : "",
             ].join(" ")}
           >
