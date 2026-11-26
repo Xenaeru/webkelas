@@ -119,7 +119,9 @@ Mode ujian tanpa tanggal mulai/selesai berjalan terus sampai dimatikan manual. D
 
 Logikanya satu fungsi murni, `resolveActiveSchedule()` di `src/lib/schedule-version.ts`, dipakai server dan client sekaligus — sehingga label, badge, dan jadwal yang tampil tidak mungkin berbeda antara keduanya. Karena evaluasinya memakai tanggal tampil, pergantian bulan (mis. 30 Nov minggu 5 → 1 Des minggu 1) otomatis ikut berganti ke Jadwal A.
 
-Item pada Jadwal Ujian punya dua kolom tambahan: `room` (ruang ujian) dan `exam_date`. Kolom itu diabaikan pada Jadwal A dan B.
+Item jadwal punya kolom `room` (ruang) yang tampil baik di Jadwal A, B, maupun Ujian. Jadwal Ujian menambahkan `exam_date`.
+
+Jam mulai dan jam selesai **tidak wajib** dan tidak lagi ada di formulir admin. Kolom `start_time` dan `end_time` tetap disimpan agar data lama tidak hilang dan tetap tampil di halaman publik bila terisi; item tanpa jam hanya menampilkan nama pelajaran, tanpa baris waktu.
 
 Tugas **tidak** terpengaruh mode jadwal: daftar tugas tetap sama di semua mode.
 
@@ -154,9 +156,11 @@ Migration dijalankan otomatis saat koneksi pertama (`src/lib/db.ts`, DDL-nya `id
 ```bash
 npm run typecheck    # TypeScript strict
 npm run lint         # ESLint
-npm test             # 93 unit test (Vitest) — berjalan di Postgres sungguhan (PGlite)
+npm test             # 97 unit test (Vitest) — berjalan di Postgres sungguhan (PGlite)
 npm run e2e          # cek HTTP + restart server sungguhan
 npm run test:ui      # cek interaksi browser (Playwright)
+npm run test:motion  # cek animasi: reveal, pill tab, reduced motion, tanpa JS
+npm run audit        # ukur overflow, kontras, elemen terpotong
 ```
 
 `npm run e2e` dan `npm run test:ui` memerlukan `npm run build` terlebih dahulu.

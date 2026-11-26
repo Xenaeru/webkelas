@@ -27,9 +27,11 @@ export interface DailySchedule {
 /**
  * What callers must hand the repository. The API layer always supplies the
  * fully parsed `ScheduleItemInput`, but scripts and tests may omit the exam-only
- * fields, so they stay optional here.
+ * fields and the (now optional) times, so they stay optional here.
  */
-export type ScheduleItemDraft = Omit<ScheduleItemInput, "room" | "examDate"> & {
+export type ScheduleItemDraft = Omit<ScheduleItemInput, "room" | "examDate" | "startTime" | "endTime"> & {
+  startTime?: string;
+  endTime?: string;
   room?: string;
   examDate?: string | null;
 };
@@ -274,8 +276,8 @@ export async function createScheduleItem(
     [
       dayId,
       input.subject,
-      input.startTime,
-      input.endTime,
+      input.startTime ?? "",
+      input.endTime ?? "",
       input.teacher ?? "",
       input.room ?? "",
       input.examDate ?? null,
@@ -323,8 +325,8 @@ export async function updateScheduleItem(
       RETURNING *`,
     [
       input.subject,
-      input.startTime,
-      input.endTime,
+      input.startTime ?? "",
+      input.endTime ?? "",
       input.teacher ?? "",
       input.room ?? "",
       input.examDate ?? null,

@@ -419,7 +419,6 @@ export function JadwalClient({
               items={items}
               nowMinutes={isActiveBySystem ? nowMinutes : null}
               showNow={isActiveBySystem}
-              showRoom={examActive}
             />
 
             {schedule?.description && (

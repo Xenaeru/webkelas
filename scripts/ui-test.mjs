@@ -175,12 +175,11 @@ try {
 
   await aPage.goto(`${BASE}/admin/jadwal`, { waitUntil: "networkidle" });
 
-  // Add a new subject to Monday
+  // Add a new subject to Monday. Times are no longer part of the admin form.
   await aPage.getByRole("tab", { name: /Sen/ }).first().click();
   await aPage.locator("#new-subject").fill("Informatika");
   await aPage.locator("#new-teacher").fill("Pak Yudi");
-  await aPage.locator("#new-start").fill("10:15");
-  await aPage.locator("#new-end").fill("11:45");
+  await aPage.locator("#new-room").fill("Lab Komputer 1");
   await aPage.getByRole("button", { name: "Tambah pelajaran" }).click();
   await aPage.waitForTimeout(900);
   check("added subject appears in the list", await aPage.getByText("Informatika").first().isVisible());
@@ -188,6 +187,11 @@ try {
     "success toast shown",
     await aPage.locator('[aria-live="polite"]').getByText(/Informatika.*ditambahkan ke hari Senin/).isVisible(),
   );
+  // Scoped to the row just added: it has no times, so it must show the
+  // "Tanpa jam" placeholder rather than an empty "–" separator.
+  const newRowText = await aPage.locator("li", { hasText: "Informatika" }).first().innerText();
+  check("new item with no times shows no time range", !newRowText.includes("–"), newRowText.slice(0, 40));
+  check("new item is labelled as having no time", /Tanpa jam/.test(newRowText));
 
   // Reload → still there (persisted, not local state)
   await aPage.reload({ waitUntil: "networkidle" });
@@ -223,16 +227,28 @@ try {
   await aPage.waitForTimeout(800);
   check("description toast shown", await aPage.getByText(/Keterangan hari Senin disimpan/).isVisible());
 
-  // Validation surfaced in the UI (this deliberately triggers a 422).
+  // The admin form no longer asks for times; the room field replaces them.
+  check(
+    "no start-time field in the add form",
+    (await aPage.locator("#new-start").count()) === 0,
+  );
+  check(
+    "no end-time field in the add form",
+    (await aPage.locator("#new-end").count()) === 0,
+  );
+  check(
+    "room field is present in the add form",
+    await aPage.locator("#new-room").isVisible(),
+  );
+
+  // An empty subject is still rejected by the backend.
   const errorsBeforeInvalid = errors.length;
   await aPage.locator("#new-subject").fill("");
-  await aPage.locator("#new-start").fill("10:00");
-  await aPage.locator("#new-end").fill("09:00");
   await aPage.getByRole("button", { name: "Tambah pelajaran" }).click();
   await aPage.waitForTimeout(700);
   check(
-    "invalid time range shows a backend validation message",
-    await aPage.getByText(/Jam selesai harus lebih lambat/).first().isVisible(),
+    "empty subject shows a backend validation message",
+    await aPage.getByText(/Mata pelajaran wajib diisi/).first().isVisible(),
   );
 
   // The only console noise allowed is the network 422 we asked for.
@@ -260,8 +276,6 @@ try {
   check("B tab shows the B variant's own teachers", bMondayBefore.includes("Ibu Sari (B)"));
   check("B tab does not show the A variant's teachers", !bMondayBefore.includes("Ibu Sari\n"));
   await aPage.locator("#new-subject").fill("Basis Data B");
-  await aPage.locator("#new-start").fill("07:00");
-  await aPage.locator("#new-end").fill("09:00");
   await aPage.getByRole("button", { name: "Tambah pelajaran" }).click();
   await aPage.waitForTimeout(900);
   check("B item appears", await aPage.getByText("Basis Data B").first().isVisible());
@@ -275,12 +289,13 @@ try {
   check("Jadwal A did not receive the B item", !aMondayText.includes("Basis Data B"));
   check("Jadwal A still has its own items", aMondayText.includes("Matematika"));
 
-  // Exam variant exposes the extra fields.
+  // The exam variant adds the date field on top of the always-present room.
   await aPage.getByRole("tab", { name: /Jadwal Ujian/ }).first().click();
   await aPage.waitForURL(/version=EXAM/, { timeout: 5000 }).catch(() => {});
   await aPage.waitForTimeout(800);
   check("exam variant shows the room field", await aPage.locator("#new-room").isVisible());
   check("exam variant shows the exam date field", await aPage.locator("#new-date").isVisible());
+  check("exam variant has no time fields", (await aPage.locator("#new-start").count()) === 0);
 
   // ---------- Admin: mode panel ----------
   console.log("\nAdmin /admin/mode-jadwal — mode switching");

@@ -1,9 +1,13 @@
 import type { ScheduleItem } from "@/lib/repository";
 import { EmptyState } from "@/components/ui/empty-state";
 
-function toMinutes(time: string): number {
+function toMinutes(time: string): number | null {
   const [h, m] = time.split(":");
-  return Number(h) * 60 + Number(m);
+  if (h === undefined || m === undefined || h === "" || m === "") return null;
+  const hours = Number(h);
+  const minutes = Number(m);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return hours * 60 + minutes;
 }
 
 export function ScheduleTimeline({
@@ -11,13 +15,11 @@ export function ScheduleTimeline({
   nowMinutes,
   showNow = false,
   compact = false,
-  showRoom = false,
 }: {
   items: ScheduleItem[];
   nowMinutes?: number | null;
   showNow?: boolean;
   compact?: boolean;
-  showRoom?: boolean;
 }) {
   if (items.length === 0) {
     return (
@@ -34,9 +36,14 @@ export function ScheduleTimeline({
       {items.map((item, index) => {
         const start = toMinutes(item.startTime);
         const end = toMinutes(item.endTime);
+        const hasTime = start !== null && end !== null;
         const isNow =
-          showNow && typeof nowMinutes === "number" && nowMinutes >= start && nowMinutes < end;
-        const isDone = showNow && typeof nowMinutes === "number" && nowMinutes >= end;
+          hasTime &&
+          showNow &&
+          typeof nowMinutes === "number" &&
+          nowMinutes >= start &&
+          nowMinutes < end;
+        const isDone = hasTime && showNow && typeof nowMinutes === "number" && nowMinutes >= end;
 
         return (
           <li
@@ -61,15 +68,21 @@ export function ScheduleTimeline({
               />
             )}
 
-            <div className="flex items-center gap-2 tabular text-[13px] text-ink-500 sm:flex-col sm:items-start sm:gap-0.5">
-              <span className={isNow ? "font-semibold text-moss-700" : "font-medium text-ink-900"}>
-                {item.startTime}
-              </span>
-              <span aria-hidden className="text-ink-400 sm:hidden">
-                –
-              </span>
-              <span className="sm:text-xs">{item.endTime}</span>
-            </div>
+            {hasTime ? (
+              <div className="flex items-center gap-2 tabular text-[13px] text-ink-500 sm:flex-col sm:items-start sm:gap-0.5">
+                <span className={isNow ? "font-semibold text-moss-700" : "font-medium text-ink-900"}>
+                  {item.startTime}
+                </span>
+                <span aria-hidden className="text-ink-400 sm:hidden">
+                  –
+                </span>
+                <span className="sm:text-xs">{item.endTime}</span>
+              </div>
+            ) : (
+              <div className="tabular text-[11px] tracking-[0.14em] text-ink-400 uppercase sm:self-center">
+                {String(index + 1).padStart(2, "0")}
+              </div>
+            )}
 
             <div className="min-w-0">
               <p className="flex flex-wrap items-center gap-2 text-[15px] leading-snug font-medium text-ink-900">
@@ -87,7 +100,7 @@ export function ScheduleTimeline({
                 <p className="mt-0.5 text-[13px] text-ink-400 italic">Guru belum diisi</p>
               )}
 
-              {(showRoom && (item.room || item.examDate)) && (
+              {(item.room || item.examDate) && (
                 <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-ink-500">
                   {item.room && (
                     <span className="inline-flex items-center gap-1 rounded border border-paper-300 bg-paper-50 px-1.5 py-0.5">
@@ -102,9 +115,11 @@ export function ScheduleTimeline({
               )}
             </div>
 
-            <span className="col-start-2 hidden self-center text-[11px] tracking-[0.14em] text-ink-400 uppercase transition-colors group-hover:text-ink-700 sm:col-start-3 sm:block">
-              {String(index + 1).padStart(2, "0")}
-            </span>
+            {hasTime && (
+              <span className="col-start-2 hidden self-center text-[11px] tracking-[0.14em] text-ink-400 uppercase transition-colors group-hover:text-ink-700 sm:col-start-3 sm:block">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+            )}
           </li>
         );
       })}

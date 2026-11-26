@@ -48,16 +48,26 @@ const optionalDateKey = z
   .optional()
   .transform((value) => (value === "" || value === undefined ? null : value));
 
+const optionalTime = z
+  .string()
+  .trim()
+  .optional()
+  .default("")
+  .refine((value) => value === "" || timePattern.test(value), "Format jam harus HH:MM");
+
 export const scheduleItemSchema = z
   .object({
     subject: trimmed(120, "Mata pelajaran").min(1, "Mata pelajaran wajib diisi"),
-    startTime: z.string().regex(timePattern, "Format jam mulai harus HH:MM"),
-    endTime: z.string().regex(timePattern, "Format jam selesai harus HH:MM"),
+    // Times are optional: the admin form no longer asks for them. They stay
+    // accepted so old data and API callers keep working, and so a day can
+    // still be ordered by time when it happens to be filled in.
+    startTime: optionalTime,
+    endTime: optionalTime,
     teacher: optionalText(120, "Nama guru"),
-    room: optionalText(60, "Ruang ujian"),
+    room: optionalText(60, "Ruang"),
     examDate: optionalDateKey,
   })
-  .refine((data) => data.startTime < data.endTime, {
+  .refine((data) => !data.startTime || !data.endTime || data.startTime < data.endTime, {
     message: "Jam selesai harus lebih lambat dari jam mulai",
     path: ["endTime"],
   });

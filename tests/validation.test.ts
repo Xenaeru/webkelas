@@ -77,6 +77,35 @@ describe("schedule validation", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts an item with no times at all", () => {
+    const result = scheduleItemSchema.safeParse({ subject: "Matematika" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.startTime).toBe("");
+      expect(result.data.endTime).toBe("");
+    }
+  });
+
+  it("accepts a room without any times", () => {
+    const result = scheduleItemSchema.safeParse({
+      subject: "Basis Data",
+      room: "Lab Komputer 2",
+    });
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.room).toBe("Lab Komputer 2");
+  });
+
+  it("still enforces ordering when only one time is given", () => {
+    expect(scheduleItemSchema.safeParse({ subject: "A", startTime: "07:00" }).success).toBe(true);
+    expect(scheduleItemSchema.safeParse({ subject: "A", endTime: "08:00" }).success).toBe(true);
+  });
+
+  it("rejects a malformed time even though it is optional", () => {
+    expect(
+      scheduleItemSchema.safeParse({ subject: "A", startTime: "7:00", endTime: "" }).success,
+    ).toBe(false);
+  });
+
   it("only allows days 1 to 5", () => {
     expect(dayParamSchema.safeParse("1").success).toBe(true);
     expect(dayParamSchema.safeParse("5").success).toBe(true);

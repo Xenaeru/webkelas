@@ -256,21 +256,23 @@ export function JadwalManager({
 
   const isLive = liveVersion.version === version;
 
+  // Room is now part of every variant, and the times are kept only so existing
+  // rows survive an edit unchanged (the form no longer exposes them).
   const renderExtraFields = (
     draftValue: ItemDraft,
     setDraftValue: (next: ItemDraft) => void,
     idPrefix: string,
-  ) =>
-    isExam && (
-      <>
-        <Field label="Ruang ujian (opsional)" htmlFor={`${idPrefix}-room`}>
-          <TextInput
-            id={`${idPrefix}-room`}
-            value={draftValue.room}
-            onChange={(e) => setDraftValue({ ...draftValue, room: e.target.value })}
-            placeholder="Contoh: Lab Komputer 2"
-          />
-        </Field>
+  ) => (
+    <>
+      <Field label="Ruang (opsional)" htmlFor={`${idPrefix}-room`}>
+        <TextInput
+          id={`${idPrefix}-room`}
+          value={draftValue.room}
+          onChange={(e) => setDraftValue({ ...draftValue, room: e.target.value })}
+          placeholder="Contoh: Lab Komputer 2"
+        />
+      </Field>
+      {isExam && (
         <Field label="Tanggal ujian (opsional)" htmlFor={`${idPrefix}-date`}>
           <TextInput
             id={`${idPrefix}-date`}
@@ -279,8 +281,9 @@ export function JadwalManager({
             onChange={(e) => setDraftValue({ ...draftValue, examDate: e.target.value })}
           />
         </Field>
-      </>
-    );
+      )}
+    </>
+  );
 
   return (
     <div className="flex flex-col gap-5">
@@ -435,22 +438,6 @@ export function JadwalManager({
                             onChange={(e) => setEditDraft({ ...editDraft, teacher: e.target.value })}
                           />
                         </Field>
-                        <Field label="Jam mulai" htmlFor={`edit-start-${item.id}`} required>
-                          <TextInput
-                            id={`edit-start-${item.id}`}
-                            type="time"
-                            value={editDraft.startTime}
-                            onChange={(e) => setEditDraft({ ...editDraft, startTime: e.target.value })}
-                          />
-                        </Field>
-                        <Field label="Jam selesai" htmlFor={`edit-end-${item.id}`} required>
-                          <TextInput
-                            id={`edit-end-${item.id}`}
-                            type="time"
-                            value={editDraft.endTime}
-                            onChange={(e) => setEditDraft({ ...editDraft, endTime: e.target.value })}
-                          />
-                        </Field>
                         {renderExtraFields(editDraft, setEditDraft, `edit-${item.id}`)}
                       </div>
 
@@ -498,17 +485,28 @@ export function JadwalManager({
                         </button>
                       </div>
 
-                      <div className="tabular w-[6.5rem] shrink-0 text-[12px] text-ink-500">
-                        <span className="font-medium text-ink-900">{item.startTime}</span>
-                        <span className="mx-1 text-ink-400">–</span>
-                        {item.endTime}
+                      <div className="flex w-[8.5rem] shrink-0 flex-col gap-0.5">
+                        <span className="tabular text-[10px] font-semibold tracking-[0.14em] text-ink-400 uppercase">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="tabular text-[12px] text-ink-500">
+                          {item.startTime && item.endTime ? (
+                            <>
+                              <span className="font-medium text-ink-900">{item.startTime}</span>
+                              <span className="mx-1 text-ink-400">–</span>
+                              {item.endTime}
+                            </>
+                          ) : (
+                            <span className="text-ink-400 italic">Tanpa jam</span>
+                          )}
+                        </span>
                       </div>
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[13px] font-medium text-ink-900">{item.subject}</p>
                         <p className="truncate text-[11px] text-ink-400">
                           {item.teacher || (isExam ? "Pengawas belum diisi" : "Guru belum diisi")}
-                          {isExam && item.room && ` · ${item.room}`}
+                          {item.room && ` · ${item.room}`}
                           {isExam && item.examDate && ` · ${item.examDate}`}
                         </p>
                       </div>
@@ -572,24 +570,6 @@ export function JadwalManager({
                 value={draft.teacher}
                 onChange={(e) => setDraft({ ...draft, teacher: e.target.value })}
                 placeholder="Kosongkan jika belum ada"
-              />
-            </Field>
-            <Field label="Jam mulai" htmlFor="new-start" required>
-              <TextInput
-                id="new-start"
-                type="time"
-                value={draft.startTime}
-                onChange={(e) => setDraft({ ...draft, startTime: e.target.value })}
-                required
-              />
-            </Field>
-            <Field label="Jam selesai" htmlFor="new-end" required>
-              <TextInput
-                id="new-end"
-                type="time"
-                value={draft.endTime}
-                onChange={(e) => setDraft({ ...draft, endTime: e.target.value })}
-                required
               />
             </Field>
             {renderExtraFields(draft, setDraft, "new")}

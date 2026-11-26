@@ -8,9 +8,13 @@ import { resolveActiveSchedule, type ScheduleContext } from "@/lib/schedule-vers
 import type { ClassSettings, DailySchedule, ScheduleSettings } from "@/lib/repository";
 import { formatDateId } from "@/lib/time";
 
-function toMinutes(time: string): number {
+function toMinutes(time: string): number | null {
   const [h, m] = time.split(":");
-  return Number(h) * 60 + Number(m);
+  if (h === undefined || m === undefined || h === "" || m === "") return null;
+  const hours = Number(h);
+  const minutes = Number(m);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return null;
+  return hours * 60 + minutes;
 }
 
 export function HomeActiveDay({
@@ -80,7 +84,8 @@ export function HomeActiveDay({
               {preview.map((item) => {
                 const start = toMinutes(item.startTime);
                 const end = toMinutes(item.endTime);
-                const isNow = showNow && nowMinutes >= start && nowMinutes < end;
+                const hasTime = start !== null && end !== null;
+                const isNow = hasTime && showNow && nowMinutes >= start && nowMinutes < end;
 
                 return (
                   <li
@@ -90,14 +95,16 @@ export function HomeActiveDay({
                       isNow ? "bg-moss-50/60" : "",
                     ].join(" ")}
                   >
-                    <span
-                      className={[
-                        "tabular w-[5.2rem] shrink-0 text-[12px]",
-                        isNow ? "font-semibold text-moss-700" : "text-ink-400",
-                      ].join(" ")}
-                    >
-                      {item.startTime}–{item.endTime}
-                    </span>
+                    {hasTime && (
+                      <span
+                        className={[
+                          "tabular w-[5.2rem] shrink-0 text-[12px]",
+                          isNow ? "font-semibold text-moss-700" : "text-ink-400",
+                        ].join(" ")}
+                      >
+                        {item.startTime}–{item.endTime}
+                      </span>
+                    )}
                     <span className="min-w-0 flex-1 truncate text-[13px] font-medium text-ink-900">
                       {item.subject}
                     </span>
